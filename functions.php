@@ -205,7 +205,7 @@ add_filter( 'manage_edit-country_columns', 'jt_edit_term_columns' );
 
 function jt_edit_term_columns( $columns ) {
 
-    $columns['flag'] = __( 'Flag', 'jt' );
+    $columns['flagged'] = __( 'Flag', 'jt' );
 
     return $columns;
 }
@@ -215,18 +215,33 @@ add_filter( 'manage_country_custom_column', 'jt_manage_term_custom_column', 10, 
 
 function jt_manage_term_custom_column( $out, $column, $term_id ) {
 
-    if ( 'flag' === $column ) {
+    if ( 'flagged' === $column ) {
 
     	$flag = get_term_meta( $term_id, 'flag', true );
 
-        if ( ! $flag )
-            $flag = 'None';
-
-        $out = $flag;
+        if (! $flag)
+        	$out = '';
+        else {
+        $out = '<span class="flag ';
+        $out .=$flag;
+        $out .= '" ></span>';}
     }
 
     return $out;
 }
+
+
+/**
+ * Enqueue styles & scripts in Admin
+ *
+ */
+
+function load_custom_wp_admin_style() {
+        wp_register_style( 'flags_css', get_template_directory_uri() . '/css/flags.min.css', false, '1.1.0' );
+        wp_enqueue_style( 'flags_css' );
+}
+add_action( 'admin_enqueue_scripts', 'load_custom_wp_admin_style' );
+
 
 
 /**
