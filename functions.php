@@ -50,6 +50,7 @@ function gimme_post_types() {
         'remove_featured_image' => _x( 'Remove show image', 'Overrides the “Remove featured image” phrase for this post type. Added in 4.3' ),
         'use_featured_image'    => _x( 'Use as show image', 'Overrides the “Use as featured image” phrase for this post type. Added in 4.3' ),
         'archives'              => _x( 'Show archives', 'The post type archive label used in nav menus. Default “Post Archives”. Added in 4.4' ),
+
     );
 
 
@@ -78,8 +79,10 @@ function gimme_post_types() {
     $shows = array(
         'labels'             => $labels,
         'public'             => true,
+        'rewrite'            => array( 'slug' => 'show' ),
         'supports'           => array( 'title', 'editor', 'thumbnail' ),
         'menu_icon' => 'dashicons-media-interactive',
+        'show_in_rest'       => true,
     );
 
     $subtitles = array(
@@ -87,6 +90,7 @@ function gimme_post_types() {
         'public'             => true,
         'supports'           => array( 'title', 'editor', 'thumbnail' ),
         'menu_icon' => 'dashicons-editor-aligncenter',
+        'show_in_rest'       => true,
     );
  
     register_post_type( 'shows', $shows );
@@ -105,7 +109,7 @@ function create_countries() {
 	// Add new taxonomy, make it hierarchical (like categories)
 	$labels = array(
 
-		'name'              => _x( 'Countries', 'taxonomy general name'),
+		'name'              => _x( 'Country', 'taxonomy general name'),
 		'singular_name'     => _x( 'Countries', 'taxonomy singular name'),
 		'search_items'      => __( 'Search Countries'),
 		'all_items'         => __( 'All Countries'),
@@ -237,8 +241,12 @@ function jt_manage_term_custom_column( $out, $column, $term_id ) {
  */
 
 function load_custom_wp_admin_style() {
-        wp_register_style( 'flags_css', get_template_directory_uri() . '/css/flags.min.css', false, '1.1.0' );
+        wp_register_style( 'flags_css', get_template_directory_uri() . '/css/flags.min.css', false, '1.2.0' );
         wp_enqueue_style( 'flags_css' );
+        wp_enqueue_style( 'admin_css', get_template_directory_uri() . '/css/admin.css', false, '1.2.0' );
+        wp_enqueue_script( 'admin_js', get_template_directory_uri() . '/js/admin.js', false, '1.1.0' );
+
+
 }
 add_action( 'admin_enqueue_scripts', 'load_custom_wp_admin_style' );
 
@@ -252,19 +260,127 @@ add_action( 'admin_enqueue_scripts', 'load_custom_wp_admin_style' );
 
 
 function gimme_register_meta_boxes() {
-    add_meta_box( 'country-id', __( 'Country', 'gimmesubs' ), 'wpdocs_my_display_callback', 'subtitles', 'normal' );
+	global $post;
+	 $selected = get_post_meta($post->ID, 'seasons', true);
+
+
+    add_meta_box( 'show-seasons', __( 'Seasons', 'gimmesubs' ), 'season_count_callback', 'shows', 'side', 'high' );
+    add_meta_box( 'show-subtitles', __( 'Subtitle Details ', 'gimmesubs' ), 'subtitle_callback', 'subtitles','side', 'high' );
+
+
+    	for( $i= 1 ; $i <= $selected ; $i++ ){
+    		$seasonID = 'show-seasons'.$i;
+    add_meta_box( $seasonID, __( 'Season '.$i, 'gimmesubs' ), 'wpdocs_my_display_callback', 'shows', 'normal'  );
+           
+        }
+
+
 }
 add_action( 'add_meta_boxes', 'gimme_register_meta_boxes' );
  
-/**
- * Meta box display callback.
- *
- * @param WP_Post $post Current post object.
- */
-function wpdocs_my_display_callback( $post ) { ?>
-  <p>Loading...</p>
+function subtitle_callback( $post ) {
+	 wp_nonce_field( 'my_subtitle_nonce', 'subtitle_nonce' );
 
-   
+	$selected = get_post_meta($post->ID, 'subtitle-for', true);
+ ?>
 
+   <p><label for="episode-number">Episide Number:</label>
+  <input type="number" name="episode-number" style="width: 50px;">
+   </p>
+
+ <p> What show is this for?</p>
+<dl id="country-select" class="dropdown">
+<input type="hidden" name="sub-show">
+  <?php if (!empty($selected)): ?>
+  <dt><a><span class="flag <?php echo $color;?>"></span><span><?php echo $selected ?></span></a></dt> 
+<?php else: ?>
+  <dt><a></span><span>Select One</span></a></dt> 
+
+<?php endif; ?>
+  <dd>
+    <ul style="display: none;">
+
+ <?php
+ $query = new WP_Query( array( 'post_type' => 'shows' ) );
+$posts = $query->posts;
+
+foreach($posts as $post) {
+
+	$terms = get_the_terms( $post->ID, 'country' );
+
+ 
+
+	$color  = get_term_meta( $terms[0]->term_id, 'flag', true );
+	?>
+	<li><a><span class="flag <?php echo $color;?>"></span><span><?php echo $post->post_title; ?></span></a></li>
+
+  
 <?}
+
+ ?>
+
+ </ul>
+
+
+  
+<?}
+
+
+
+function wpdocs_my_display_callback( $post ) {
+ ?>
+  <p>Subtitles for <?php echo 'a season';?> of <?php echo $post->post_title?>. </p>
+
+  
+<?}
+
+function season_count_callback( $post ) {
+ $selected = get_post_meta($post->ID, 'seasons', true);
+ wp_nonce_field( 'my_seasons_nonce', 'seasons_nonce' );
+
+ ?>
+
+  <select name="seasons">
+
+<?php 
+$results_array = array(1, 2, 3, 4, 5,6,7,8,9,'10+');
+foreach($results_array as $key => $value){ ?>
+                <option value="<?php echo $value;?>" <?php selected( $selected, $value ); ?>><?php echo $value;     ?></option> 
+<?php } ?>
+  </select>
+  
+<?}
+
+
+add_action( 'save_post', 'save_seasons_count' );
+add_action( 'save_post', 'save_subtitles' );
+
+function save_seasons_count( $post_id ) {
+ // Bail if we're doing an auto save
+ if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+ // if our nonce isn't there, or we can't verify it, bail
+ if( !isset( $_POST['seasons_nonce'] ) || !wp_verify_nonce( $_POST['seasons_nonce'], 'my_seasons_nonce' ) ) return;
+ // if our current user can't edit this post, bail
+ if( !current_user_can( 'edit_post' ) ) return;
+
+// Probably a good idea to make sure your data is set
+ if( isset( $_POST['seasons'] ) )
+  update_post_meta( $post_id, 'seasons', esc_attr( $_POST['seasons'] ) );
+}
+
+
+
+function save_subtitles( $post_id ) {
+ // Bail if we're doing an auto save
+ if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+ // if our nonce isn't there, or we can't verify it, bail
+ if( !isset( $_POST['seasons_nonce'] ) || !wp_verify_nonce( $_POST['my_subtitle_nonce'], 'subtitle_nonce' ) ) return;
+ // if our current user can't edit this post, bail
+ if( !current_user_can( 'edit_post' ) ) return;
+
+// Probably a good idea to make sure your data is set
+ if( isset( $_POST['sub-show'] ) )
+  update_post_meta( $post_id, 'subtitle_for', esc_attr( $_POST['sub-show'] ) );
+}
+
  
