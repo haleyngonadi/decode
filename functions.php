@@ -60,7 +60,7 @@ function gimme_post_types() {
         'menu_name'             => _x( 'Subtitles', 'Admin Menu text' ),
         'name_admin_bar'        => _x( 'Show', 'Add New on Toolbar' ),
         'add_new'               => __( 'Add New' ),
-        'add_new_item'          => __( 'Add New' ),
+        'add_new_item'          => __( 'Add Subtitles For An Episode' ),
         'new_item'              => __( 'New Episode Subtitles' ),
         'edit_item'             => __( 'Edit Episode Subtitles' ),
         'view_item'             => __( 'View Subtitles' ),
@@ -88,7 +88,7 @@ function gimme_post_types() {
     $subtitles = array(
         'labels'             => $sublabs,
         'public'             => true,
-        'supports'           => array( 'title', 'editor', 'thumbnail' ),
+        'supports'           => array( 'title', 'editor', 'thumbnail', 'author' ),
         'menu_icon' => 'dashicons-editor-aligncenter',
         'show_in_rest'       => true,
     );
@@ -96,6 +96,63 @@ function gimme_post_types() {
     register_post_type( 'shows', $shows );
     register_post_type( 'subtitles', $subtitles );
 }
+
+
+function wpb_change_title_text( $title ){
+     $screen = get_current_screen();
+ 
+     if  ( 'subtitles' == $screen->post_type ) {
+          $title = 'Enter Episode Title';
+     }
+ 
+     return $title;
+}
+ 
+add_filter( 'enter_title_here', 'wpb_change_title_text' );
+
+add_filter( 'manage_edit-subtitles_columns', 'my_edit_movie_columns' ) ;
+
+function my_edit_movie_columns( $columns ) {
+
+    $columns = array(
+        'cb' => '<input type="checkbox" />',
+        'title' => __( 'Title' ),
+        'show' => __( 'Show' ),
+        'date' => __( 'Date' )
+    );
+
+    return $columns;
+}
+
+
+
+add_action( 'manage_subtitles_posts_custom_column' , 'custom_columns', 10, 2 );
+
+function custom_columns( $column, $post_id ) {
+    global $post;
+    switch ( $column ) {
+        
+        case 'show':
+            $name = get_post_meta( $post_id, 'subtitle_for_id', true ); 
+
+        $categories = get_the_terms($name, 'country');
+ 
+         if ( ! empty( $categories ) ) {
+         
+                     $flag = get_term_meta( $categories[0]->term_id, 'flag', true );
+
+             if ( ! empty( $flag ) ) {
+
+            
+            $out = '<span class="flag '.$flag.'"></span>';
+        }
+            }
+            $out .= get_post_meta( $post_id, 'subtitle_for', true ); 
+            echo $out;
+            break;
+    }
+}
+
 
 /**
  * Custom Taxonomy
@@ -282,6 +339,8 @@ function subtitle_callback( $post ) {
 	 wp_nonce_field( 'my_subtitle_nonce', 'subtitle_nonce' );
 
 	$selected = get_post_meta($post->ID, 'subtitle_for', true);
+    $selectedid = get_post_meta($post->ID, 'subtitle_for_id', true);
+
     $epinumber = get_post_meta($post->ID, 'episode_number', true);
  ?>
 
@@ -291,7 +350,9 @@ function subtitle_callback( $post ) {
 
  <p> What show is this for?</p>
 <dl id="country-select" class="dropdown">
-<input type="hidden" name="subshow" value="<?php echo $selected;?>">
+<input type="hidden" name="subshow" value="<?php echo $selected;?>" class="title">
+<input type="hidden" name="subshowid" value="<?php echo $selectedid;?>" class="id">
+
   <?php if (!empty($selected)): ?>
   <dt><a><span><?php echo $selected ?></span></a></dt> 
 <?php else: ?>
@@ -313,7 +374,7 @@ foreach($posts as $post) {
 
 	$color  = get_term_meta( $terms[0]->term_id, 'flag', true );
 	?>
-	<li><a><span class="flag <?php echo $color;?>"></span><span><?php echo $post->post_title; ?></span></a></li>
+	<li><a><span class="flag <?php echo $color;?>"></span><span><?php echo $post->post_title; ?></span><span class="show-id" style="display: none"><?php echo $post->ID; ?></span></a></li>
 
   
 <?}
@@ -382,6 +443,9 @@ function save_subtitles( $post_id ) {
 // Probably a good idea to make sure your data is set
  if( isset( $_POST['subshow'] ) )
   update_post_meta( $post_id, 'subtitle_for', esc_attr( $_POST['subshow'] ) );
+
+ if( isset( $_POST['subshowid'] ) )
+  update_post_meta( $post_id, 'subtitle_for_id', esc_attr( $_POST['subshowid'] ) );
 
 if( isset( $_POST['episode-number'] ) )
   update_post_meta( $post_id, 'episode_number', esc_attr( $_POST['episode-number'] ) );

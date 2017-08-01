@@ -167,3 +167,12 @@ dl.dropdown dt span:nth-child(2) {
 dl.dropdown dt span:nth-child(3) {
 	display: none;
 }
+td.show.column-show {
+    position: relative;
+}
+
+.show.column-show .flag {
+    margin-right: 6px;
+    float: left;
+    margin-top: 3px;
+}

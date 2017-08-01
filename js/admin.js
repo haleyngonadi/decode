@@ -10,9 +10,13 @@ jQuery(function($) {
             $(".dropdown dt a span").html(text);
 
            var inner =  $(this).find("span:eq(1)").text();
+           var innerID =  $(this).find("span:eq(2)").text();
 
 
-            $(".dropdown input").val(inner);
+
+            $(".dropdown input.title").val(inner);
+            $(".dropdown input.id").val(innerID);
+
             $(".dropdown dd ul").hide();
             $("#result").html("Selected value is: " + getSelectedValue("country-select"));
         });
