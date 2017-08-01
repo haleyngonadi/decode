@@ -37,9 +37,7 @@
 .dropdown a:hover {
 	color: #5d4617;
 }
-.dropdown dt a:hover, .dropdown dt a:focus {
-	color: #5d4617;
-}
+
 .dropdown dt a {
 	position: relative;
 	background: #fff;
@@ -105,6 +103,7 @@
     padding: 0;
     margin: 0;
         position: relative;
+        cursor: pointer;
 }
 
 .dropdown dd ul li span:last-child {

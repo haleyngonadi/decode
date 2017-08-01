@@ -281,18 +281,19 @@ add_action( 'add_meta_boxes', 'gimme_register_meta_boxes' );
 function subtitle_callback( $post ) {
 	 wp_nonce_field( 'my_subtitle_nonce', 'subtitle_nonce' );
 
-	$selected = get_post_meta($post->ID, 'subtitle-for', true);
+	$selected = get_post_meta($post->ID, 'subtitle_for', true);
+    $epinumber = get_post_meta($post->ID, 'episode_number', true);
  ?>
 
    <p><label for="episode-number">Episide Number:</label>
-  <input type="number" name="episode-number" style="width: 50px;">
+  <input type="number" name="episode-number" style="width: 50px;" value="<?php echo $epinumber;?>">
    </p>
 
  <p> What show is this for?</p>
 <dl id="country-select" class="dropdown">
-<input type="hidden" name="sub-show">
+<input type="hidden" name="subshow" value="<?php echo $selected;?>">
   <?php if (!empty($selected)): ?>
-  <dt><a><span class="flag <?php echo $color;?>"></span><span><?php echo $selected ?></span></a></dt> 
+  <dt><a><span><?php echo $selected ?></span></a></dt> 
 <?php else: ?>
   <dt><a></span><span>Select One</span></a></dt> 
 
@@ -374,13 +375,16 @@ function save_subtitles( $post_id ) {
  // Bail if we're doing an auto save
  if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
  // if our nonce isn't there, or we can't verify it, bail
- if( !isset( $_POST['seasons_nonce'] ) || !wp_verify_nonce( $_POST['my_subtitle_nonce'], 'subtitle_nonce' ) ) return;
+ if( !isset( $_POST['subtitle_nonce'] ) || !wp_verify_nonce( $_POST['subtitle_nonce'], 'my_subtitle_nonce' ) ) return;
  // if our current user can't edit this post, bail
  if( !current_user_can( 'edit_post' ) ) return;
 
 // Probably a good idea to make sure your data is set
- if( isset( $_POST['sub-show'] ) )
-  update_post_meta( $post_id, 'subtitle_for', esc_attr( $_POST['sub-show'] ) );
+ if( isset( $_POST['subshow'] ) )
+  update_post_meta( $post_id, 'subtitle_for', esc_attr( $_POST['subshow'] ) );
+
+if( isset( $_POST['episode-number'] ) )
+  update_post_meta( $post_id, 'episode_number', esc_attr( $_POST['episode-number'] ) );
 }
 
  
