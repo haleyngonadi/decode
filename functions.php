@@ -334,6 +334,40 @@ function gimme_register_meta_boxes() {
 
 }
 add_action( 'add_meta_boxes', 'gimme_register_meta_boxes' );
+
+
+function wpdocs_my_display_callback( $post ) {
+
+    $args = array(
+        'post_type' => 'subtitles',
+        'orderby'   => 'meta_value_num',
+        'meta_key'  => 'episode_number',
+        'order'   => 'ASC',
+        'meta_query' => array(
+        array(
+            'key'     => 'itsseason',
+            'value'   => 1,
+            'compare' => '=',
+        ),
+    ),
+
+        );
+    $lastposts = get_posts( $args );
+    //var_dump($lastposts);
+
+foreach ( $lastposts as $sub ) {
+ ?>
+
+<p style="display: table; width: 100%; margin-bottom: 5px;">
+  <input type="text" name="" value="<?php echo get_post_meta($sub->ID, 'episode_number', true)?>" style="width: 5%; float: left;" disabled>
+  <input type="text" name="" value="<?php echo $sub->post_name?>" style="width: 94%; float: left">
+
+  </p>
+
+  <?php } ?>
+<?}
+
+
  
 function subtitle_callback( $post ) {
 	 wp_nonce_field( 'my_subtitle_nonce', 'subtitle_nonce' );
@@ -342,10 +376,19 @@ function subtitle_callback( $post ) {
     $selectedid = get_post_meta($post->ID, 'subtitle_for_id', true);
 
     $epinumber = get_post_meta($post->ID, 'episode_number', true);
+    $seanumber = get_post_meta($post->ID, 'itsseason', true);
+
  ?>
 
-   <p><label for="episode-number">Episide Number:</label>
+   <p>
+
+<label for="season-number">Season:</label>
+  <input type="number" name="season-number" style="width: 50px;" value="<?php if($seanumber) : ?><?php echo $seanumber; ?><?php else : echo 1?><?php endif; ?>">
+
+<label for="episode-number">Episode:</label>
   <input type="number" name="episode-number" style="width: 50px;" value="<?php echo $epinumber;?>">
+
+
    </p>
 
  <p> What show is this for?</p>
@@ -389,12 +432,7 @@ foreach($posts as $post) {
 
 
 
-function wpdocs_my_display_callback( $post ) {
- ?>
-  <p>Subtitles for <?php echo 'a season';?> of <?php echo $post->post_title?>. </p>
 
-  
-<?}
 
 function season_count_callback( $post ) {
  $selected = get_post_meta($post->ID, 'seasons', true);
@@ -448,7 +486,10 @@ function save_subtitles( $post_id ) {
   update_post_meta( $post_id, 'subtitle_for_id', esc_attr( $_POST['subshowid'] ) );
 
 if( isset( $_POST['episode-number'] ) )
-  update_post_meta( $post_id, 'episode_number', esc_attr( $_POST['episode-number'] ) );
+  update_post_meta( $post_id, 'episode_number', esc_attr( $_POST['episode-number'] ));
+
+    if( isset( $_POST['season-number'] ) )
+  update_post_meta( $post_id, 'itsseason', esc_attr( $_POST['season-number'] ) );
 }
 
  

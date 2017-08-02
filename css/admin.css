@@ -84,7 +84,7 @@
     list-style: none;
     max-height: 270px;
     overflow-y: auto;
-    top: -9px;
+    top: 3px;
     z-index: 2;
 }
 
