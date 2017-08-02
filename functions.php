@@ -378,6 +378,9 @@ function subtitle_callback( $post ) {
     $epinumber = get_post_meta($post->ID, 'episode_number', true);
     $seanumber = get_post_meta($post->ID, 'itsseason', true);
 
+     $lang = get_post_meta($post->ID, 'lang', true);
+
+
  ?>
 
    <p>
@@ -388,6 +391,21 @@ function subtitle_callback( $post ) {
 <label for="episode-number">Episode:</label>
   <input type="number" name="episode-number" style="width: 50px;" value="<?php echo $epinumber;?>">
 
+   </p>
+
+   <p>
+       
+
+<label for="sub-lang"><?php echo __('Translating To', 'gimmesubs')?>:</label><br>
+  <select name="sub_lang">
+
+  <option value="English" <?php selected( $lang, 'English' ); ?>>English</option>
+<?php 
+$results_array = array('Español', 'Français', '한국어', 'Português');
+foreach($results_array as $key => $value){ ?>
+                <option value="<?php echo $value;?>" <?php selected( $lang, $value ); ?>><?php echo $value;     ?></option> 
+<?php } ?>
+  </select>
 
    </p>
 
@@ -490,6 +508,9 @@ if( isset( $_POST['episode-number'] ) )
 
     if( isset( $_POST['season-number'] ) )
   update_post_meta( $post_id, 'itsseason', esc_attr( $_POST['season-number'] ) );
+
+if( isset( $_POST['sub_lang'] ) )
+  update_post_meta( $post_id, 'lang', esc_attr( $_POST['sub_lang'] ) );
 }
 
  
