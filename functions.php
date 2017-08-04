@@ -21,7 +21,6 @@
 	add_theme_support( 'post-thumbnails' );
 
 
-
 /**
  * Post Types
  *
@@ -548,6 +547,38 @@ function save_watch( $post_id ) {
 
 /*** Custom Buttons ***/
 
+function appthemes_add_quicktags() {
+       $screen = get_current_screen();
+
+    if (wp_script_is('quicktags') &&  'subtitles' == $screen->post_type){
+?>
+    <script type="text/javascript">
+    QTags.addButton( 'sub_tag', 'time', css_callback );
+
+    function css_callback(){
+        var css_class = prompt( 'Class name:', '' );
+        if ( css_class && css_class !== '' ) {
+            QTags.insertContent('<div class="' + css_class +'"></div>');
+        }
+    }
+
+
+
+    </script>
+<?php
+    }
+}
+add_action( 'admin_print_footer_scripts', 'appthemes_add_quicktags' );
+
+function wpa_47010( $qtInit ) {
+    $qtInit['buttons'] = 'strong,em,dfw';
+
+    return $qtInit;
+}
+add_filter('quicktags_settings', 'wpa_47010');
+
+/*** TinyMCE
+
 function custom_mce_button() {
    $screen = get_current_screen();
 
@@ -568,11 +599,38 @@ function custom_tinymce_plugin( $plugin_array ) {
 }
 
 function register_mce_button( $buttons ) {
-  array_push( $buttons, 'custom_mce_button' );
+        $buttons = array( 'bold','italic', 'custom_mce_button','indent','outdent','link','unlink');
+
+  //array_push( $buttons, 'custom_mce_button' );
   return $buttons;
 }
 
- 
+ function cw_mce_buttons_2( $buttons ) {
+    $buttons = array('fontselect','styleselect','fontsizeselect','charmap','blockquote','hr','pastetext','removeformat','spellchecker','fullscreen','undo','redo','wp_help');
+    return false;
+}
+add_filter( 'mce_buttons_2', 'cw_mce_buttons_2' );
+***/
+
+add_filter('user_can_richedit', 'disable_wyswyg_for_custom_post_type');
+function disable_wyswyg_for_custom_post_type( $default ){
+  global $post;
+  if( $post->post_type === 'subtitles') return false;
+  return $default;
+}
+
+function RemoveAddMediaButtonsForSubtitles(){
+
+       $screen = get_current_screen();
+
+
+    if ( 'subtitles' == $screen->post_type ) {
+        remove_action( 'media_buttons', 'media_buttons' );
+    }
+}
+add_action('admin_head', 'RemoveAddMediaButtonsForSubtitles');
+
+
 
  /*** Shortcodes ***/
 
