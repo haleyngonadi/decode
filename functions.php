@@ -545,4 +545,44 @@ function save_watch( $post_id ) {
   update_post_meta( $post_id, 'watch_episode', esc_attr( $_POST['watch_episode'] ) );
 
 }
+
+/*** Custom Buttons ***/
+
+function custom_mce_button() {
+   $screen = get_current_screen();
+
+   if( !current_user_can( 'edit_post' ) ) return;
+  // Check if WYSIWYG is enabled
+  if ( 'true' == get_user_option( 'rich_editing' ) &&  'subtitles' == $screen->post_type ) {
+    add_filter( 'mce_external_plugins', 'custom_tinymce_plugin' );
+    add_filter( 'mce_buttons', 'register_mce_button' );
+  }
+}
+
+
+add_action('admin_head', 'custom_mce_button');
+
+function custom_tinymce_plugin( $plugin_array ) {
+  $plugin_array['custom_mce_button'] = get_template_directory_uri() .'/js/editor_plugin.js';
+  return $plugin_array;
+}
+
+function register_mce_button( $buttons ) {
+  array_push( $buttons, 'custom_mce_button' );
+  return $buttons;
+}
+
  
+
+ /*** Shortcodes ***/
+
+
+ function subtag_func( $atts, $content = "" ) {
+
+    $out = '<span ';
+    $out .= 'data-begin="'.$atts['data-begin'].'"';
+    $out .= 'data-end="'.$atts['data-end'].'"';
+    $out .= '>'. $content . '</span>';
+    return $out;
+}
+add_shortcode( 'sub', 'subtag_func' );

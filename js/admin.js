@@ -36,4 +36,7 @@ jQuery(function($) {
         $("#flagSwitcher").click(function() {
             $(".dropdown img.flag").toggleClass("flagvisibility");
         });
+
+
+
     });
