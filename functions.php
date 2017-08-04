@@ -331,10 +331,26 @@ function gimme_register_meta_boxes() {
            
         }
 
+            add_meta_box( 'watch-the-episode', __( 'Watch', 'gimmesubs' ), 'watch_callback', 'subtitles','normal', 'high' );
+
+
 
 }
 add_action( 'add_meta_boxes', 'gimme_register_meta_boxes' );
 
+
+function watch_callback( $post ) { 
+     wp_nonce_field( 'my_watch_nonce', 'watch_nonce' );
+
+     $selected = get_post_meta($post->ID, 'watch_episode', true);
+
+    ?>
+<p style="display: table; width: 100%; margin-bottom: 5px;">
+  <input type="url" name="watch_episode" value="<?php echo get_post_meta($post->ID, 'watch_episode', true)?>" style="width: 100%;" placeholder="Enter the URL here...">
+
+  </p>
+
+<?}
 
 function wpdocs_my_display_callback( $post ) {
 
@@ -472,6 +488,8 @@ foreach($results_array as $key => $value){ ?>
 
 add_action( 'save_post', 'save_seasons_count' );
 add_action( 'save_post', 'save_subtitles' );
+add_action( 'save_post', 'save_watch' );
+
 
 function save_seasons_count( $post_id ) {
  // Bail if we're doing an auto save
@@ -511,6 +529,20 @@ if( isset( $_POST['episode-number'] ) )
 
 if( isset( $_POST['sub_lang'] ) )
   update_post_meta( $post_id, 'lang', esc_attr( $_POST['sub_lang'] ) );
+
+
 }
 
+function save_watch( $post_id ) {
+ // Bail if we're doing an auto save
+ if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+ // if our nonce isn't there, or we can't verify it, bail
+ if( !isset( $_POST['watch_nonce'] ) || !wp_verify_nonce( $_POST['watch_nonce'], 'my_watch_nonce' ) ) return;
+ // if our current user can't edit this post, bail
+ if( !current_user_can( 'edit_post' ) ) return;
+
+ if( isset( $_POST['watch_episode'] ) )
+  update_post_meta( $post_id, 'watch_episode', esc_attr( $_POST['watch_episode'] ) );
+
+}
  
