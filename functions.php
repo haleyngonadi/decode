@@ -79,7 +79,7 @@ function gimme_post_types() {
         'labels'             => $labels,
         'public'             => true,
         'rewrite'            => array( 'slug' => 'show' ),
-        'supports'           => array( 'title', 'editor', 'thumbnail' ),
+        'supports'           => array( 'title', 'thumbnail' ),
         'menu_icon' => 'dashicons-media-interactive',
         'show_in_rest'       => true,
     );
@@ -322,6 +322,8 @@ function gimme_register_meta_boxes() {
 
     add_meta_box( 'show-seasons', __( 'Seasons', 'gimmesubs' ), 'season_count_callback', 'shows', 'side', 'high' );
     add_meta_box( 'show-subtitles', __( 'Subtitle Details ', 'gimmesubs' ), 'subtitle_callback', 'subtitles','side', 'high' );
+        add_meta_box( 'show-description', __( 'Show Description', 'gimmesubs' ), 'desc_callback', 'shows','side');
+
 
 
     	for( $i= 1 ; $i <= $selected ; $i++ ){
@@ -336,6 +338,21 @@ function gimme_register_meta_boxes() {
 
 }
 add_action( 'add_meta_boxes', 'gimme_register_meta_boxes' );
+
+
+function desc_callback( $post ) { 
+     wp_nonce_field( 'my_desc_nonce', 'desc_nonce' );
+
+     $selected = get_post_meta($post->ID, 'show_description', true);
+
+    ?>
+<p style="display: table; width: 100%; margin-bottom: 5px;">
+<label for='show_description'>Enter a short description of this show:</label>
+  <textarea name="show_description" rows="3" cols="30"><?php echo $selected;?></textarea> 
+
+  </p>
+
+<?}
 
 
 function watch_callback( $post ) { 
@@ -353,33 +370,14 @@ function watch_callback( $post ) {
 
 function wpdocs_my_display_callback( $post ) {
 
-    $args = array(
-        'post_type' => 'subtitles',
-        'orderby'   => 'meta_value_num',
-        'meta_key'  => 'episode_number',
-        'order'   => 'ASC',
-        'meta_query' => array(
-        array(
-            'key'     => 'itsseason',
-            'value'   => 1,
-            'compare' => '=',
-        ),
-    ),
 
-        );
-    $lastposts = get_posts( $args );
-    //var_dump($lastposts);
-
-foreach ( $lastposts as $sub ) {
  ?>
 
 <p style="display: table; width: 100%; margin-bottom: 5px;">
-  <input type="text" name="" value="<?php echo get_post_meta($sub->ID, 'episode_number', true)?>" style="width: 5%; float: left;" disabled>
-  <input type="text" name="" value="<?php echo $sub->post_name?>" style="width: 94%; float: left">
+  <a class="button">Add Subtitles</a>
 
   </p>
 
-  <?php } ?>
 <?}
 
 
@@ -488,6 +486,7 @@ foreach($results_array as $key => $value){ ?>
 add_action( 'save_post', 'save_seasons_count' );
 add_action( 'save_post', 'save_subtitles' );
 add_action( 'save_post', 'save_watch' );
+add_action( 'save_post', 'save_desc' );
 
 
 function save_seasons_count( $post_id ) {
@@ -542,6 +541,20 @@ function save_watch( $post_id ) {
 
  if( isset( $_POST['watch_episode'] ) )
   update_post_meta( $post_id, 'watch_episode', esc_attr( $_POST['watch_episode'] ) );
+
+}
+
+
+function save_desc( $post_id ) {
+ // Bail if we're doing an auto save
+ if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+ // if our nonce isn't there, or we can't verify it, bail
+ if( !isset( $_POST['desc_nonce'] ) || !wp_verify_nonce( $_POST['desc_nonce'], 'my_desc_nonce' ) ) return;
+ // if our current user can't edit this post, bail
+ if( !current_user_can( 'edit_post' ) ) return;
+
+ if( isset( $_POST['show_description'] ) )
+  update_post_meta( $post_id, 'show_description', esc_attr( $_POST['show_description'] ) );
 
 }
 
