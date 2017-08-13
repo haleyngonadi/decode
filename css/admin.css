@@ -182,3 +182,117 @@ td.show.column-show {
 .post-type-subtitles .quicktags-toolbar {
 text-align: center;
 }
+
+
+.subadded:first-child {
+padding-top: 0;
+	}
+
+
+.subadded {
+	text-align: center;
+    border-bottom: 1px dashed #ddd;
+padding: 10px 0;
+}
+/*
+.subadded input[type=url] {
+    margin-top: 9px !important;
+}*/
+
+
+.subadded input {
+    display: block;
+    width: 100%;
+    padding: 6px;
+    text-align: left;
+    margin-top: 6px;
+    border: 1px solid #ddd;
+    outline: none;
+}
+
+.langcol {
+	padding: 0 !important;
+}
+
+.remove {
+    background: #5b72fc;
+    display: inline-block;
+    text-align: center;
+    font-size: 13px;
+    line-height: 26px;
+    margin: 7px 0;
+    padding: 3px 6px 0;
+    cursor: pointer;
+    border-width: 1px;
+    border-style: solid;
+    -webkit-appearance: none;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    white-space: nowrap;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    color: white;
+    border-color: rgba(0,0,0,0.2);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    color: #fff;
+    text-decoration: none;
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.2), 1px 0 1px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.2), -1px 0 1px rgba(0,0,0,0.2);
+}
+
+.editit {
+    background: #feca71;
+    display: inline-block;
+    text-align: center;
+    font-size: 13px;
+    line-height: 26px;
+    margin: 7px 0;
+    padding: 3px 6px 0;
+    cursor: pointer;
+    border-width: 1px;
+    border-style: solid;
+    -webkit-appearance: none;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    white-space: nowrap;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    color: white;
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+    color: #fff;
+    text-decoration: none;
+}
+
+
+
+.subadded .mce-flow-layout {
+    white-space: normal;
+    text-align: center;
+}
+
+
+
+
+.textsubs {
+	transition: 0.3s;
+	height: 0;
+	visibility: hidden;
+	opacity: 0;
+	width: 0;
+}
+
+
+.allsubs .textsubs {
+	height: auto;
+	visibility: visible;
+	opacity: 1;
+	width: auto;
+}
+
+.mce-notification.mce-has-close {
+    padding-right: 15px;
+    display: none !important;
+}
+

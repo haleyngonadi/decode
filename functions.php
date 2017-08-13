@@ -300,7 +300,20 @@ function load_custom_wp_admin_style() {
         wp_register_style( 'flags_css', get_template_directory_uri() . '/css/flags.min.css', false, '1.2.0' );
         wp_enqueue_style( 'flags_css' );
         wp_enqueue_style( 'admin_css', get_template_directory_uri() . '/css/admin.css', false, '1.2.0' );
-        wp_enqueue_script( 'admin_js', get_template_directory_uri() . '/js/admin.js', false, '1.1.0' );
+        wp_enqueue_style( 'bootstrap_admin', get_template_directory_uri() . '/css/bootstrap-grid.css', false, '1.1.0' );
+
+        wp_enqueue_script( 'admin_js', get_template_directory_uri() . '/js/admin.js', false, '1.2.0' );
+
+
+      $screen = get_current_screen();
+
+      if ('shows' == $screen->post_type){
+
+       // wp_enqueue_script( 'tiny_jquery', get_template_directory_uri() . '/js/jquery.tinymce.min.js', false, '1.0.0' );
+        wp_enqueue_script( 'tiny_js', '//cloud.tinymce.com/stable/tinymce.min.js?apiKey=ucvbqtrax0meq720f0i577b98551fn2vvrryyv8t11sjwqs1', false, '1.0.0' );
+
+      }
+
 
 
 }
@@ -320,15 +333,14 @@ function gimme_register_meta_boxes() {
 	 $selected = get_post_meta($post->ID, 'seasons', true);
 
 
-    add_meta_box( 'show-seasons', __( 'Seasons', 'gimmesubs' ), 'season_count_callback', 'shows', 'side', 'high' );
+    add_meta_box( 'show-seasons', __( 'Show Information', 'gimmesubs' ), 'season_count_callback', 'shows', 'side', 'default' );
     add_meta_box( 'show-subtitles', __( 'Subtitle Details ', 'gimmesubs' ), 'subtitle_callback', 'subtitles','side', 'high' );
-        add_meta_box( 'show-description', __( 'Show Description', 'gimmesubs' ), 'desc_callback', 'shows','side');
 
 
 
     	for( $i= 1 ; $i <= $selected ; $i++ ){
     		$seasonID = 'show-seasons'.$i;
-    add_meta_box( $seasonID, __( 'Season '.$i, 'gimmesubs' ), 'wpdocs_my_display_callback', 'shows', 'normal'  );
+    add_meta_box( $seasonID, __( 'Season '.$i, 'gimmesubs' ), 'wpdocs_my_display_callback', 'shows', 'normal', 'low', array( 'season' => $i )  );
            
         }
 
@@ -340,19 +352,7 @@ function gimme_register_meta_boxes() {
 add_action( 'add_meta_boxes', 'gimme_register_meta_boxes' );
 
 
-function desc_callback( $post ) { 
-     wp_nonce_field( 'my_desc_nonce', 'desc_nonce' );
 
-     $selected = get_post_meta($post->ID, 'show_description', true);
-
-    ?>
-<p style="display: table; width: 100%; margin-bottom: 5px;">
-<label for='show_description'>Enter a short description of this show:</label>
-  <textarea name="show_description" rows="3" cols="30"><?php echo $selected;?></textarea> 
-
-  </p>
-
-<?}
 
 
 function watch_callback( $post ) { 
@@ -368,15 +368,69 @@ function watch_callback( $post ) {
 
 <?}
 
-function wpdocs_my_display_callback( $post ) {
+function wpdocs_my_display_callback( $post, $metabox ) {
+     wp_nonce_field( 'my_add_subs_nonce', 'add_subs_nonce' );
+   
+    ?>
+    <div id="meta_inner" >
+
+
+    <?php
+        $season = convert_number_to_words($metabox['args']['season']);
+
+    $episodes = get_post_meta($post->ID,'subtitles_'.$season,false);
+
+
+    $c = 0;
+    if ( count( $episodes ) > 0 ) {
+      foreach($episodes as $row => $innerArray){
+      foreach($innerArray as $innerRow => $track){
+       
+         if ( isset( $track['episode'] )  ) 
+
+          {?>
+
+
+
+        <div class="row subadded newsub">
+
+
+<div class="col-md-4 col-xs-12"><input type="text" name="subtitles<?php echo $season?>[<?php echo $c?>][episode]" placeholder="Select An Episode" value="<?php echo $track['episode']?>"></div>
+<div class="col-md-1 col-xs-12 langcol"><input type="text" name="subtitles<?php echo $season?>[<?php echo $c?>][lang]" placeholder="Subtitle language?" value="<?php echo $track['lang']?>"></div>
+<div class="col-md-5 col-xs-12" style="padding-right: 0;"><input type="url" name="subtitles<?php echo $season?>[<?php echo $c?>][watch]" placeholder="Where can this episode be watched?" value="<?php echo $track['watch']?>"></div>
+           <div class="col-md-2">
+           <div class="editit"><span class="dashicons dashicons-edit"></span></div>
+           <div class="remove"><span class="dashicons dashicons-trash"></span></div>
+           </div>
+
+<div class="col-md-12">
+
+<div class="textsubs">
+<textarea class="subtext" name="subtitles<?php echo $season?>[<?php echo $c?>][text]"><?php echo $track['text']?></textarea></div></div>
+
+</div>
+
+<?php $c = $c +1;?>
+
+
+               <?}
+      }
+      }
+
+    }
 
 
  ?>
 
-<p style="display: table; width: 100%; margin-bottom: 5px;">
-  <a class="button">Add Subtitles</a>
+ <div id="here_<?php echo $season;?>"></div>
+
+
+<p style="display: table; width: 100%; margin-bottom: 5px; text-align: center;">
+  <a class="button addsubs" data-season="<?php echo $season?>">Add Subtitles</a>
 
   </p>
+
+  </div>
 
 <?}
 
@@ -467,18 +521,27 @@ foreach($posts as $post) {
 
 function season_count_callback( $post ) {
  $selected = get_post_meta($post->ID, 'seasons', true);
+  $desc = get_post_meta($post->ID, 'show_description', true);
+
  wp_nonce_field( 'my_seasons_nonce', 'seasons_nonce' );
 
  ?>
 
+<h4 style="margin-bottom: 4px;">Seasons</h4>
   <select name="seasons">
 
 <?php 
 $results_array = array(1, 2, 3, 4, 5,6,7,8,9,'10+');
 foreach($results_array as $key => $value){ ?>
-                <option value="<?php echo $value;?>" <?php selected( $selected, $value ); ?>><?php echo $value;     ?></option> 
+                <option value="<?php echo $value;?>" <?php selected( $selected, $value ); ?>><?php echo $value;?></option> 
 <?php } ?>
   </select>
+
+  <p style="display: table; width: 100%; margin-bottom: 5px;">
+<label for='show_description'><h4 style="margin-bottom: 4px; margin-top: 4px;"> Description</h4></label>
+  <textarea name="show_description" rows="3" cols="30"><?php echo $desc;?></textarea> 
+
+  </p>
   
 <?}
 
@@ -486,7 +549,6 @@ foreach($results_array as $key => $value){ ?>
 add_action( 'save_post', 'save_seasons_count' );
 add_action( 'save_post', 'save_subtitles' );
 add_action( 'save_post', 'save_watch' );
-add_action( 'save_post', 'save_desc' );
 
 
 function save_seasons_count( $post_id ) {
@@ -500,6 +562,10 @@ function save_seasons_count( $post_id ) {
 // Probably a good idea to make sure your data is set
  if( isset( $_POST['seasons'] ) )
   update_post_meta( $post_id, 'seasons', esc_attr( $_POST['seasons'] ) );
+
+if( isset( $_POST['show_description'] ) )
+  update_post_meta( $post_id, 'show_description', esc_attr( $_POST['show_description'] ) );
+
 }
 
 
@@ -508,25 +574,28 @@ function save_subtitles( $post_id ) {
  // Bail if we're doing an auto save
  if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
  // if our nonce isn't there, or we can't verify it, bail
- if( !isset( $_POST['subtitle_nonce'] ) || !wp_verify_nonce( $_POST['subtitle_nonce'], 'my_subtitle_nonce' ) ) return;
+ if( !isset( $_POST['add_subs_nonce'] ) || !wp_verify_nonce( $_POST['add_subs_nonce'], 'my_add_subs_nonce' ) ) return;
  // if our current user can't edit this post, bail
  if( !current_user_can( 'edit_post' ) ) return;
 
-// Probably a good idea to make sure your data is set
- if( isset( $_POST['subshow'] ) )
-  update_post_meta( $post_id, 'subtitle_for', esc_attr( $_POST['subshow'] ) );
 
- if( isset( $_POST['subshowid'] ) )
-  update_post_meta( $post_id, 'subtitle_for_id', esc_attr( $_POST['subshowid'] ) );
+ $results_array = array(1, 2, 3, 4, 5,6,7,8,9,10);
+foreach($results_array as $key => $value){ 
 
-if( isset( $_POST['episode-number'] ) )
-  update_post_meta( $post_id, 'episode_number', esc_attr( $_POST['episode-number'] ));
+    $episodes = $_POST['subtitles'.convert_number_to_words($value)];
+     if( isset( $_POST['subtitles'.convert_number_to_words($value)] ) ) {
+    update_post_meta($post_id,'subtitles_'.convert_number_to_words($value),$episodes); }
 
-    if( isset( $_POST['season-number'] ) )
-  update_post_meta( $post_id, 'itsseason', esc_attr( $_POST['season-number'] ) );
+    else {
+      delete_post_meta($post_id,'subtitles_'.convert_number_to_words($value),$episodes);
+    }
 
-if( isset( $_POST['sub_lang'] ) )
-  update_post_meta( $post_id, 'lang', esc_attr( $_POST['sub_lang'] ) );
+
+} 
+
+
+
+    
 
 
 }
@@ -545,18 +614,6 @@ function save_watch( $post_id ) {
 }
 
 
-function save_desc( $post_id ) {
- // Bail if we're doing an auto save
- if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
- // if our nonce isn't there, or we can't verify it, bail
- if( !isset( $_POST['desc_nonce'] ) || !wp_verify_nonce( $_POST['desc_nonce'], 'my_desc_nonce' ) ) return;
- // if our current user can't edit this post, bail
- if( !current_user_can( 'edit_post' ) ) return;
-
- if( isset( $_POST['show_description'] ) )
-  update_post_meta( $post_id, 'show_description', esc_attr( $_POST['show_description'] ) );
-
-}
 
 /*** Custom Buttons ***/
 
@@ -657,3 +714,116 @@ add_action('admin_head', 'RemoveAddMediaButtonsForSubtitles');
     return $out;
 }
 add_shortcode( 'sub', 'subtag_func' );
+
+
+function convert_number_to_words($number) {
+
+    $hyphen      = '-';
+    $conjunction = ' and ';
+    $separator   = ', ';
+    $negative    = 'negative ';
+    $decimal     = ' point ';
+    $dictionary  = array(
+        0                   => 'zero',
+        1                   => 'one',
+        2                   => 'two',
+        3                   => 'three',
+        4                   => 'four',
+        5                   => 'five',
+        6                   => 'six',
+        7                   => 'seven',
+        8                   => 'eight',
+        9                   => 'nine',
+        10                  => 'ten',
+        11                  => 'eleven',
+        12                  => 'twelve',
+        13                  => 'thirteen',
+        14                  => 'fourteen',
+        15                  => 'fifteen',
+        16                  => 'sixteen',
+        17                  => 'seventeen',
+        18                  => 'eighteen',
+        19                  => 'nineteen',
+        20                  => 'twenty',
+        30                  => 'thirty',
+        40                  => 'fourty',
+        50                  => 'fifty',
+        60                  => 'sixty',
+        70                  => 'seventy',
+        80                  => 'eighty',
+        90                  => 'ninety',
+        100                 => 'hundred',
+        1000                => 'thousand',
+        1000000             => 'million',
+        1000000000          => 'billion',
+        1000000000000       => 'trillion',
+        1000000000000000    => 'quadrillion',
+        1000000000000000000 => 'quintillion'
+    );
+
+    if (!is_numeric($number)) {
+        return false;
+    }
+
+    if (($number >= 0 && (int) $number < 0) || (int) $number < 0 - PHP_INT_MAX) {
+        // overflow
+        trigger_error(
+            'convert_number_to_words only accepts numbers between -' . PHP_INT_MAX . ' and ' . PHP_INT_MAX,
+            E_USER_WARNING
+        );
+        return false;
+    }
+
+    if ($number < 0) {
+        return $negative . convert_number_to_words(abs($number));
+    }
+
+    $string = $fraction = null;
+
+    if (strpos($number, '.') !== false) {
+        list($number, $fraction) = explode('.', $number);
+    }
+
+    switch (true) {
+        case $number < 21:
+            $string = $dictionary[$number];
+            break;
+        case $number < 100:
+            $tens   = ((int) ($number / 10)) * 10;
+            $units  = $number % 10;
+            $string = $dictionary[$tens];
+            if ($units) {
+                $string .= $hyphen . $dictionary[$units];
+            }
+            break;
+        case $number < 1000:
+            $hundreds  = $number / 100;
+            $remainder = $number % 100;
+            $string = $dictionary[$hundreds] . ' ' . $dictionary[100];
+            if ($remainder) {
+                $string .= $conjunction . convert_number_to_words($remainder);
+            }
+            break;
+        default:
+            $baseUnit = pow(1000, floor(log($number, 1000)));
+            $numBaseUnits = (int) ($number / $baseUnit);
+            $remainder = $number % $baseUnit;
+            $string = convert_number_to_words($numBaseUnits) . ' ' . $dictionary[$baseUnit];
+            if ($remainder) {
+                $string .= $remainder < 100 ? $conjunction : $separator;
+                $string .= convert_number_to_words($remainder);
+            }
+            break;
+    }
+
+    if (null !== $fraction && is_numeric($fraction)) {
+        $string .= $decimal;
+        $words = array();
+        foreach (str_split((string) $fraction) as $number) {
+            $words[] = $dictionary[$number];
+        }
+        $string .= implode(' ', $words);
+    }
+
+    return $string;
+}
